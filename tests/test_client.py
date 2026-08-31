@@ -6,7 +6,7 @@ import pytest
 from waysdrop.errors import WaysdropError, infer_base_url, validate_api_key
 from waysdrop.webhooks import parse_webhook, verify_signature
 
-FIXTURES = Path(__file__).resolve().parents[2] / "waysdrop-api-spec" / "fixtures"
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
 SIGNATURE = json.loads((FIXTURES / "signature.json").read_text())
 
 

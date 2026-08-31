@@ -30,7 +30,7 @@ errors = load_module("waysdrop_errors", "errors.py")
 webhooks = load_module("waysdrop_webhooks", "webhooks.py")
 
 FIXTURE = json.loads(
-    (Path(__file__).resolve().parents[2] / "waysdrop-api-spec" / "fixtures" / "signature.json").read_text()
+    (Path(__file__).resolve().parent / "fixtures" / "signature.json").read_text()
 )
 
 
