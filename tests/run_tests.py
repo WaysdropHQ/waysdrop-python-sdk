@@ -16,6 +16,16 @@ def load_module(name: str, filename: str):
     return module
 
 
+def bootstrap_package() -> None:
+    pkg = importlib.util.module_from_spec(
+        importlib.util.spec_from_loader("waysdrop", loader=None)
+    )
+    sys.modules["waysdrop"] = pkg
+    types_mod = load_module("waysdrop.types", "types.py")
+    sys.modules["waysdrop.types"] = types_mod
+
+
+bootstrap_package()
 errors = load_module("waysdrop_errors", "errors.py")
 webhooks = load_module("waysdrop_webhooks", "webhooks.py")
 

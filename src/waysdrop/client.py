@@ -1,9 +1,28 @@
 from __future__ import annotations
 
-from typing import Any, Mapping, Optional
+from typing import Mapping, cast
 
 import httpx
 
+from waysdrop.types import (
+    FleetType,
+    CityLocation,
+    StateLocation,
+    AccountSummary,
+    DeliveryDetail,
+    MerchantWallet,
+    CountryLocation,
+    DeliveryPackage,
+    PricingResponse,
+    WebhookEnvelope,
+    RouteDataResponse,
+    ExchangeRateResponse,
+    CancelDeliveryResponse,
+    CreateDeliveryResponse,
+    ListDeliveriesResponse,
+    ConvertCurrencyResponse,
+    PaymentCheckoutResponse,
+)
 from waysdrop.errors import WaysdropError, infer_base_url, validate_api_key
 
 
@@ -35,53 +54,53 @@ class WaysdropClient:
     def __exit__(self, *args: object) -> None:
         self.close()
 
-    def list_countries(self, *, search: str | None = None, limit: int | None = None) -> Any:
-        return self._get("/api/countries", search=search, limit=limit)
+    def list_countries(self, *, search: str | None = None, limit: int | None = None) -> list[CountryLocation]:
+        return cast(list[CountryLocation], self._get("/api/countries", search=search, limit=limit))
 
-    def list_states(self, *, search: str | None = None, limit: int | None = None) -> Any:
-        return self._get("/api/states", search=search, limit=limit)
+    def list_states(self, *, search: str | None = None, limit: int | None = None) -> list[StateLocation]:
+        return cast(list[StateLocation], self._get("/api/states", search=search, limit=limit))
 
-    def list_cities(self, *, search: str | None = None, limit: int | None = None) -> Any:
-        return self._get("/api/cities", search=search, limit=limit)
+    def list_cities(self, *, search: str | None = None, limit: int | None = None) -> list[CityLocation]:
+        return cast(list[CityLocation], self._get("/api/cities", search=search, limit=limit))
 
-    def get_route(self, origin: dict, destination: dict) -> Any:
-        return self._post("/api/route", {"origin": origin, "destination": destination})
+    def get_route(self, origin: dict, destination: dict) -> RouteDataResponse:
+        return cast(RouteDataResponse, self._post("/api/route", {"origin": origin, "destination": destination}))
 
-    def list_fleet_types(self) -> Any:
-        return self._get("/api/fleet-types")
+    def list_fleet_types(self) -> list[FleetType]:
+        return cast(list[FleetType], self._get("/api/fleet-types"))
 
-    def get_pricing(self, body: dict, *, currency: str | None = None) -> Any:
-        return self._post("/api/pricing", self._with_currency(body, currency), currency=currency)
+    def get_pricing(self, body: dict, *, currency: str | None = None) -> PricingResponse:
+    def create_or_update_package(self, body: dict, *, currency: str | None = None) -> DeliveryPackage:
+        return cast(PricingResponse, self._post("/api/pricing", self._with_currency(body, currency), currency=currency))
 
-    def create_delivery_request(self, body: dict, *, currency: str | None = None) -> Any:
-        return self._post("/api/request", self._with_currency(body, currency), currency=currency)
+    def create_delivery_request(self, body: dict, *, currency: str | None = None) -> CreateDeliveryResponse:
 
-    def cancel_delivery_request(self, delivery_id: str) -> Any:
-        return self._post(f"/api/request/{delivery_id}/cancel", {})
+        self._request("DELETE", f"/api/package/{package_id}")
+        return cast(CreateDeliveryResponse, self._post("/api/request", self._with_currency(body, currency), currency=currency))
+    def cancel_delivery_request(self, delivery_id: str) -> CancelDeliveryResponse:
+        return cast(CancelDeliveryResponse, self._post(f"/api/request/{delivery_id}/cancel", {}))
 
-    def create_or_update_package(self, body: dict, *, currency: str | None = None) -> Any:
-        return self._post("/api/package", self._with_currency(body, currency), currency=currency)
+
+        return cast(DeliveryPackage, self._post("/api/package", self._with_currency(body, currency), currency=currency))
 
     def delete_package(self, package_id: str) -> None:
-        self._request("DELETE", f"/api/package/{package_id}")
+    def list_packages(self, *, currency: str | None = None) -> list[DeliveryPackage]:
+        return cast(list[DeliveryPackage], self._get("/api/packages", currency=currency))
 
-    def list_packages(self, *, currency: str | None = None) -> Any:
-        return self._get("/api/packages", currency=currency)
+    def get_wallet(self, *, currency: str | None = None) -> MerchantWallet:
+        return cast(MerchantWallet, self._get("/api/wallet", currency=currency))
 
-    def get_wallet(self, *, currency: str | None = None) -> Any:
-        return self._get("/api/wallet", currency=currency)
+    def create_payment_checkout(self, body: dict, *, currency: str | None = None) -> PaymentCheckoutResponse:
+        return cast(PaymentCheckoutResponse, self._post("/api/payments/checkout", self._with_currency(body, currency), currency=currency))
 
-    def create_payment_checkout(self, body: dict, *, currency: str | None = None) -> Any:
-        return self._post("/api/payments/checkout", self._with_currency(body, currency), currency=currency)
+    def get_account(self) -> AccountSummary:
+        return cast(AccountSummary, self._get("/api/account"))
 
-    def get_account(self) -> Any:
-        return self._get("/api/account")
+    def get_exchange_rate(self, from_currency: str, to_currency: str) -> ExchangeRateResponse:
+        return cast(ExchangeRateResponse, self._get("/api/exchange-rate", from_=from_currency, to=to_currency))
 
-    def get_exchange_rate(self, from_currency: str, to_currency: str) -> Any:
-        return self._get("/api/exchange-rate", from_=from_currency, to=to_currency)
-
-    def convert_currency(self, amount: float, from_currency: str, to_currency: str) -> Any:
-        return self._get("/api/convert", amount=amount, from_=from_currency, to=to_currency)
+    def convert_currency(self, amount: float, from_currency: str, to_currency: str) -> ConvertCurrencyResponse:
+        return cast(ConvertCurrencyResponse, self._get("/api/convert", amount=amount, from_=from_currency, to=to_currency))
 
     def list_deliveries(
         self,
@@ -91,18 +110,14 @@ class WaysdropClient:
         page: int | None = None,
         limit: int | None = None,
         currency: str | None = None,
-    ) -> Any:
-        return self._get(
-            "/api/deliveries",
-            status=status,
-            search=search,
-            page=page,
-            limit=limit,
-            currency=currency,
+    ) -> ListDeliveriesResponse:
+        return cast(
+            ListDeliveriesResponse,
+            self._get("/api/deliveries", status=status, search=search, page=page, limit=limit, currency=currency),
         )
 
-    def get_delivery(self, delivery_id: str, *, currency: str | None = None) -> Any:
-        return self._get(f"/api/deliveries/{delivery_id}", currency=currency)
+    def get_delivery(self, delivery_id: str, *, currency: str | None = None) -> DeliveryDetail:
+        return cast(DeliveryDetail, self._get(f"/api/deliveries/{delivery_id}", currency=currency))
 
     def _with_currency(self, body: dict, currency: str | None) -> dict:
         c = currency or self._display_currency
@@ -110,11 +125,11 @@ class WaysdropClient:
             return {**body, "currency": c}
         return body
 
-    def _get(self, path: str, **params: Any) -> Any:
+    def _get(self, path: str, **params: object) -> object:
         return self._request("GET", path, params={k: v for k, v in params.items() if v is not None})
 
-    def _post(self, path: str, body: dict, *, currency: str | None = None) -> Any:
-        params = {}
+    def _post(self, path: str, body: dict, *, currency: str | None = None) -> object:
+        params: dict[str, str] = {}
         c = currency or self._display_currency
         if c:
             params["currency"] = c
@@ -125,9 +140,9 @@ class WaysdropClient:
         method: str,
         path: str,
         *,
-        params: Mapping[str, Any] | None = None,
+        params: Mapping[str, object] | None = None,
         json: dict | None = None,
-    ) -> Any:
+    ) -> object:
         headers = {"api-key": self._api_key, "Accept": "application/json"}
         if self._correlation_id:
             headers["X-Correlation-Id"] = self._correlation_id
@@ -166,7 +181,7 @@ class WaysdropClient:
         return data
 
 
-class AsyncWaysdropClient(WaysdropClient):
+class AsyncWaysdropClient:
     def __init__(
         self,
         api_key: str,
@@ -183,30 +198,30 @@ class AsyncWaysdropClient(WaysdropClient):
         self._timeout = timeout
         self._display_currency = display_currency
         self._correlation_id = correlation_id
-        self._async_client = client or httpx.AsyncClient(timeout=timeout)
+        self._client = client or httpx.AsyncClient(timeout=timeout)
 
     async def aclose(self) -> None:
-        await self._async_client.aclose()
+        await self._client.aclose()
 
-    async def get_account(self) -> Any:
-        return await self._arequest("GET", "/api/account")
+    async def get_account(self) -> AccountSummary:
+        return cast(AccountSummary, await self._arequest("GET", "/api/account"))
 
-    async def list_fleet_types(self) -> Any:
-        return await self._arequest("GET", "/api/fleet-types")
+    async def list_fleet_types(self) -> list[FleetType]:
+        return cast(list[FleetType], await self._arequest("GET", "/api/fleet-types"))
 
     async def _arequest(
         self,
         method: str,
         path: str,
         *,
-        params: Mapping[str, Any] | None = None,
+        params: Mapping[str, object] | None = None,
         json: dict | None = None,
-    ) -> Any:
+    ) -> object:
         headers = {"api-key": self._api_key, "Accept": "application/json"}
         if self._correlation_id:
             headers["X-Correlation-Id"] = self._correlation_id
 
-        response = await self._async_client.request(
+        response = await self._client.request(
             method,
             f"{self._base_url}{path}",
             headers=headers,
