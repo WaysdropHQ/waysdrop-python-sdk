@@ -3,6 +3,7 @@ name: CI
 on:
     push:
         branches: [main, master]
+        tags: ["v*"]
     pull_request:
 
 jobs:
@@ -15,7 +16,6 @@ jobs:
                   python-version: "3.11"
             - run: pip install httpx
             - run: python tests/run_tests.py
-              working-directory: waysdrop-python-sdk
 
     publish:
         if: startsWith(github.ref, 'refs/tags/v')
@@ -28,9 +28,7 @@ jobs:
                   python-version: "3.11"
             - run: pip install build twine
             - run: python -m build
-              working-directory: waysdrop-python-sdk
             - run: twine upload dist/*
-              working-directory: waysdrop-python-sdk
               env:
                   TWINE_USERNAME: __token__
                   TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
