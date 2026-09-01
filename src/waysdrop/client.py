@@ -70,20 +70,20 @@ class WaysdropClient:
         return cast(list[FleetType], self._get("/api/fleet-types"))
 
     def get_pricing(self, body: dict, *, currency: str | None = None) -> PricingResponse:
-    def create_or_update_package(self, body: dict, *, currency: str | None = None) -> DeliveryPackage:
         return cast(PricingResponse, self._post("/api/pricing", self._with_currency(body, currency), currency=currency))
 
     def create_delivery_request(self, body: dict, *, currency: str | None = None) -> CreateDeliveryResponse:
-
-        self._request("DELETE", f"/api/package/{package_id}")
         return cast(CreateDeliveryResponse, self._post("/api/request", self._with_currency(body, currency), currency=currency))
+
     def cancel_delivery_request(self, delivery_id: str) -> CancelDeliveryResponse:
         return cast(CancelDeliveryResponse, self._post(f"/api/request/{delivery_id}/cancel", {}))
 
-
+    def create_or_update_package(self, body: dict, *, currency: str | None = None) -> DeliveryPackage:
         return cast(DeliveryPackage, self._post("/api/package", self._with_currency(body, currency), currency=currency))
 
     def delete_package(self, package_id: str) -> None:
+        self._request("DELETE", f"/api/package/{package_id}")
+
     def list_packages(self, *, currency: str | None = None) -> list[DeliveryPackage]:
         return cast(list[DeliveryPackage], self._get("/api/packages", currency=currency))
 
