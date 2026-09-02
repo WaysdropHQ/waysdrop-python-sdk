@@ -152,6 +152,21 @@ Import from `waysdrop`: `AccountSummary`, `PricingResponse`, `DeliveryDetail`, `
 
 ---
 
+## OAuth (v1.1)
+
+```python
+from waysdrop.oauth import OAuthClient, generate_pkce_pair
+
+oauth = OAuthClient("wdo_staging_…", "https://example.com/oauth/callback")
+pkce = generate_pkce_pair()
+url = oauth.build_authorize_url(state="csrf", pkce=pkce)
+# tokens = oauth.exchange_code(code, code_verifier=pkce["code_verifier"])
+```
+
+See `examples/oauth/` and [OAuth docs](https://docs.waysdrop.com/get-started/oauth).
+
+---
+
 ## License
 
 MIT

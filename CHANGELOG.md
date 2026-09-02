@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0
+
+- OAuth submodule (`waysdrop.oauth`) — `OAuthClient`, PKCE, discovery, token, userinfo, revoke
+
 ## 1.0.1
 
 - Comprehensive README with full API reference and examples
