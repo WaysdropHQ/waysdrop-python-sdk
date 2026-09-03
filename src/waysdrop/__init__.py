@@ -20,9 +20,11 @@ from waysdrop.types import (
     CreateDeliveryResponse,
     ConvertCurrencyResponse,
     PaymentCheckoutResponse,
+    PaymentByExternalReferenceResponse,
+    RefundProcessedData,
 )
 from waysdrop.client import AsyncWaysdropClient, WaysdropClient
-from waysdrop.errors import WaysdropError, infer_base_url, validate_api_key
+from waysdrop.errors import WaysdropError, infer_base_url, infer_key_type, validate_api_key
 from waysdrop.webhooks import is_webhook_event, parse_webhook, parse_webhook_event, verify_signature
 
 __all__ = [
@@ -30,6 +32,7 @@ __all__ = [
     "AsyncWaysdropClient",
     "WaysdropError",
     "infer_base_url",
+    "infer_key_type",
     "validate_api_key",
     "verify_signature",
     "parse_webhook",
@@ -49,6 +52,8 @@ __all__ = [
     "ListDeliveriesResponse",
     "MerchantWallet",
     "PaymentCheckoutResponse",
+    "PaymentByExternalReferenceResponse",
+    "RefundProcessedData",
     "PricingResponse",
     "RouteDataResponse",
     "StateLocation",
@@ -56,4 +61,4 @@ __all__ = [
     "WebhookEventName",
 ]
 
-__version__ = "1.0.1"
+__version__ = "1.2.0"

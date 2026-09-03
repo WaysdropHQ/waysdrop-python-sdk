@@ -1,8 +1,8 @@
 # waysdrop (Python SDK)
 
-Official Waysdrop **Partner API** SDK for Python 3.10+.
+Official Waysdrop SDK for Python 3.10+.
 
-All 18 `/api/*` endpoints, TypedDict response types, sync + async clients, and webhook helpers.
+Partner API (`/api/*`), webhook helpers, and **OAuth** (Sign in with Waysdrop). OAuth lives in `waysdrop.oauth` and is independent of the Partner API client.
 
 ## Install
 
@@ -12,7 +12,23 @@ pip install waysdrop
 
 ## Authentication
 
-API keys (`wsp_live_…` / `wsp_staging_…`) are sent as the `api-key` header. Staging keys default to `https://staging-api.waysdrop.com`; live keys to `https://api.waysdrop.com`.
+API keys are sent as the `api-key` header. Created in the [API dashboard](https://api-dashboard.waysdrop.com).
+
+| Key type | Prefix                                        | Default base URL                                                                |
+| -------- | --------------------------------------------- | ------------------------------------------------------------------------------- |
+| Secret   | `wsp_live_` / `wsp_staging_` + 64 hex         | staging → `https://staging-api.waysdrop.com`, live → `https://api.waysdrop.com` |
+| Public   | `wsp_pub_live_` / `wsp_pub_staging_` + 64 hex | same                                                                            |
+
+```python
+from waysdrop import infer_key_type, validate_api_key
+
+validate_api_key("wsp_staging_...")
+infer_key_type("wsp_pub_live_" + "a" * 64)  # "public"
+```
+
+### Public API keys (v1.2+)
+
+Public keys work in the browser on quote/geo and payment routes (configure **allowed origins** in the dashboard): countries, route, pricing, FX, `POST /api/payments/checkout`, and `GET /api/payments/by-external-reference/{ref}`. Deliveries, wallet, and packages require the **secret** key on your backend.
 
 ## Client
 
@@ -116,10 +132,25 @@ created = client.create_delivery_request(
 
 ### Wallet & payments
 
-| Method                                     | HTTP                          | Returns                   |
-| ------------------------------------------ | ----------------------------- | ------------------------- |
-| `get_wallet(currency=)`                    | `GET /api/wallet`             | `MerchantWallet`          |
-| `create_payment_checkout(body, currency=)` | `POST /api/payments/checkout` | `PaymentCheckoutResponse` |
+| Method                                     | HTTP                                            | Returns                   |
+| ------------------------------------------ | ----------------------------------------------- | ------------------------- |
+| `get_wallet(currency=)`                    | `GET /api/wallet`                               | `MerchantWallet`          |
+| `create_payment_checkout(body, currency=)` | `POST /api/payments/checkout`                   | `PaymentCheckoutResponse` |
+| `get_payment_by_external_reference(ref)`   | `GET /api/payments/by-external-reference/{ref}` | deposit summary           |
+
+Pass `externalReference` in the checkout / delivery request body for idempotent reconciliation.
+
+```python
+checkout = client.create_payment_checkout(
+    {
+        "amount": 10000,
+        "customerEmail": "customer@example.com",
+        "externalReference": "order-123",
+    },
+    currency="NGN",
+)
+payment = client.get_payment_by_external_reference("order-123")
+```
 
 ### FX
 
@@ -152,16 +183,37 @@ Import from `waysdrop`: `AccountSummary`, `PricingResponse`, `DeliveryDetail`, `
 
 ---
 
-## OAuth (v1.1)
+## OAuth (Sign in with Waysdrop)
+
+Import from `waysdrop.oauth`. Client IDs: `wdo_live_<32 hex>` / `wdo_staging_<32 hex>`. Confidential apps pass `client_secret` (`wdos_…`).
+
+| Method                                       | Description          |
+| -------------------------------------------- | -------------------- |
+| `get_discovery()`                            | OpenID configuration |
+| `build_authorize_url(scope=, state=, pkce=)` | Authorization URL    |
+| `exchange_code(code, code_verifier=)`        | Code → tokens        |
+| `refresh_token(refresh_token)`               | Refresh access token |
+| `revoke_token(token)`                        | Revoke token         |
+| `get_user_info(access_token)`                | User profile         |
+
+PKCE: `generate_pkce_pair()`, `generate_code_verifier()`, `generate_code_challenge()`.
 
 ```python
 from waysdrop.oauth import OAuthClient, generate_pkce_pair
 
-oauth = OAuthClient("wdo_staging_…", "https://example.com/oauth/callback")
+oauth = OAuthClient(
+    "wdo_staging_…",
+    "https://example.com/oauth/callback",
+    client_secret="wdos_…",  # confidential apps only
+)
 pkce = generate_pkce_pair()
 url = oauth.build_authorize_url(state="csrf", pkce=pkce)
-# tokens = oauth.exchange_code(code, code_verifier=pkce["code_verifier"])
+# Redirect → on callback:
+tokens = oauth.exchange_code(code, code_verifier=pkce["code_verifier"])
+user = oauth.get_user_info(tokens["access_token"])
 ```
+
+OAuth responses are raw JSON (not the Partner API envelope). Errors raise `OAuthError`.
 
 See `examples/oauth/` and [OAuth docs](https://docs.waysdrop.com/get-started/oauth).
 

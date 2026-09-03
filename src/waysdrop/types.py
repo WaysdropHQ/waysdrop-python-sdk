@@ -34,6 +34,7 @@ WebhookEventName = Literal[
     "delivery.reassignment.requested",
     "delivery.reassignment.collected",
     "payment.received",
+    "refund.processed",
     "order.created",
     "order.cancelled",
     "order.confirmed",
@@ -237,6 +238,30 @@ class PaginatedMeta(TypedDict):
 class ListDeliveriesResponse(TypedDict):
     data: list[DeliveryDetail]
     meta: PaginatedMeta
+
+
+class PaymentByExternalReferenceResponse(TypedDict, total=False):
+    reference: str
+    status: str
+    amount: str
+    currency: str
+    externalReference: str
+    merchantReference: str
+    deliveryId: str | None
+    trackingId: str | None
+    createdAt: str
+    updatedAt: str
+
+
+class RefundProcessedData(TypedDict, total=False):
+    deliveryId: str | None
+    trackingId: str | None
+    externalReference: str | None
+    refundAmount: str | None
+    refundSource: str | None
+    refundKind: str | None
+    reference: str | None
+    processedAt: str
 
 
 class WebhookEnvelope(TypedDict):

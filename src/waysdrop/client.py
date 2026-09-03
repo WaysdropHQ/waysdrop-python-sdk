@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from urllib.parse import quote
+
 from typing import Mapping, cast
 
 import httpx
@@ -22,6 +24,7 @@ from waysdrop.types import (
     ListDeliveriesResponse,
     ConvertCurrencyResponse,
     PaymentCheckoutResponse,
+    PaymentByExternalReferenceResponse,
 )
 from waysdrop.errors import WaysdropError, infer_base_url, validate_api_key
 
@@ -110,14 +113,32 @@ class WaysdropClient:
         page: int | None = None,
         limit: int | None = None,
         currency: str | None = None,
+        external_reference: str | None = None,
     ) -> ListDeliveriesResponse:
         return cast(
             ListDeliveriesResponse,
-            self._get("/api/deliveries", status=status, search=search, page=page, limit=limit, currency=currency),
+            self._get(
+                "/api/deliveries",
+                status=status,
+                search=search,
+                page=page,
+                limit=limit,
+                currency=currency,
+                externalReference=external_reference,
+            ),
         )
 
     def get_delivery(self, delivery_id: str, *, currency: str | None = None) -> DeliveryDetail:
         return cast(DeliveryDetail, self._get(f"/api/deliveries/{delivery_id}", currency=currency))
+
+    def get_payment_by_external_reference(
+        self, external_reference: str
+    ) -> PaymentByExternalReferenceResponse:
+        encoded = quote(external_reference, safe="")
+        return cast(
+            PaymentByExternalReferenceResponse,
+            self._get(f"/api/payments/by-external-reference/{encoded}"),
+        )
 
     def _with_currency(self, body: dict, currency: str | None) -> dict:
         c = currency or self._display_currency
